@@ -14,17 +14,19 @@ namespace AbstractTCPlib
         private Thread recieve;
         private Thread send;
         private int intLenght;
+        private int id;
 
         private bool isAlive;
 
-        public Action<byte[]> OnRawDataRecieved;
-        public Action<ErrorTypes, string> OnError;
+        public Action<int, byte[]> OnRawDataRecieved;
+        public Action<int, ErrorTypes, string> OnError;
 
-        public TCPgeneral(TcpClient client)
+        public TCPgeneral(TcpClient client, int uniqueID)
         {
             isAlive = true;
             this.client = client;
             stream = this.client.GetStream();
+            id = uniqueID;
 
             sendBuffer = new ConcurrentQueue<byte[]>();
             intLenght = BitConverter.GetBytes(int.MaxValue).Length;
@@ -50,7 +52,7 @@ namespace AbstractTCPlib
                     {
                         if (OnError != null)
                         {
-                            OnError(ErrorTypes.ExceededByteMaxValueOfInt, "byteArrayShouldbeSmaller");
+                            OnError(ErrorTypes.ExceededByteMaxValueOfInt, "byteArrayShouldbeSmaller max size is int.maxvalue - 4");
                         }
                         continue;
                     }
@@ -65,7 +67,7 @@ namespace AbstractTCPlib
                     }
                     catch (Exception e)
                     {
-                        OnError(ErrorTypes.TCPWriteException, e.Message);
+                        OnError(id, ErrorTypes.TCPWriteException, e.Message);
                         isAlive = false;
                         Dispose();
                     }
@@ -133,7 +135,7 @@ namespace AbstractTCPlib
                                 bufferList.CopyTo(0, final, 0, bytesToRead);
                                 if (OnRawDataRecieved != null)
                                 {
-                                    OnRawDataRecieved(final);
+                                    OnRawDataRecieved(id, final);
                                 }
                                 bufferList.RemoveRange(0, bytesToRead);
                                 bytesToRead = 0;

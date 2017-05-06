@@ -24,6 +24,8 @@ namespace AbstractTCPlib.UDPdiscovery
             this.port = port;
 
             client = new UdpClient(port);
+            client.Client.ReceiveTimeout = 5000;
+            client.Client.SendTimeout = 5000;
             client.EnableBroadcast = true;
             end = new IPEndPoint(IPAddress.Broadcast, port);
         }
@@ -31,48 +33,34 @@ namespace AbstractTCPlib.UDPdiscovery
         {
             client.Send(broadcastMessageClient, broadcastMessageClient.Length, end);
 
-            Thread listener = new Thread(new ThreadStart(broadCastThread));
-            listener.Start();
+            TcpListener lis = new TcpListener(IPAddress.Any, port);
+            lis.Start();
 
-            Thread.Sleep(500);
+            TimeSpan span = new TimeSpan(0, 0, 5);
+            DateTime start = DateTime.UtcNow;
+            DateTime check;
 
-            if (listener.IsAlive)
+            while (!lis.Pending())
             {
-                listener.Abort();
+                Thread.Sleep(2);
+                check = DateTime.UtcNow;
+
+                if (check - start > span)
+                {
+                    break;
+                }
             }
+
+            if (lis.Pending())
+            {
+                resultedClient = lis.AcceptTcpClient();
+            }
+
 
             end = new IPEndPoint(IPAddress.Broadcast, port);
 
             return resultedClient;
         }
 
-        private void broadCastThread()
-        {
-            byte[] res = null;
-
-            while (true)
-            {
-                res = client.Receive(ref end);
-                if (res == null)
-                {
-                    break;
-                }
-                if (broadcastMessageMaster.SequenceEqual(res))
-                {
-                    try
-                    {
-                        TcpListener lis = new TcpListener(IPAddress.Any, port);
-                        lis.Start();
-                        resultedClient = lis.AcceptTcpClient();
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("UDPClient: " + e);
-                        
-                    }
-                }
-            }
-        }
     }
 }

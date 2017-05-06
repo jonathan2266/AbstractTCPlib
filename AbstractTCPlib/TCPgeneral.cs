@@ -33,10 +33,12 @@ namespace AbstractTCPlib
 
             recieve = new Thread(new ThreadStart(recieveTCP));
             send = new Thread(new ThreadStart(sendTCP));
+        }
+        public void Start()
+        {
             recieve.Start();
             send.Start();
         }
-
         private void sendTCP()
         {
             byte[] toSend;
@@ -52,7 +54,7 @@ namespace AbstractTCPlib
                     {
                         if (OnError != null)
                         {
-                            OnError(ErrorTypes.ExceededByteMaxValueOfInt, "byteArrayShouldbeSmaller max size is int.maxvalue - 4");
+                            OnError(id, ErrorTypes.ExceededByteMaxValueOfInt, "byteArrayShouldbeSmaller max size is int.maxvalue - 4");
                         }
                         continue;
                     }
@@ -67,7 +69,10 @@ namespace AbstractTCPlib
                     }
                     catch (Exception e)
                     {
-                        OnError(id, ErrorTypes.TCPWriteException, e.Message);
+                        if (OnError != null)
+                        {
+                            OnError(id, ErrorTypes.TCPWriteException, e.Message);
+                        }
                         isAlive = false;
                         Dispose();
                     }
@@ -91,7 +96,10 @@ namespace AbstractTCPlib
             }
             catch (Exception e)
             {
-                OnError(ErrorTypes.ClientReceiveBufferSize, e.Message);
+                if (OnError != null)
+                {
+                    OnError(id, ErrorTypes.ClientReceiveBufferSize, e.Message);
+                }
                 isAlive = false;
                 Dispose();
             }
@@ -103,22 +111,46 @@ namespace AbstractTCPlib
                 try
                 {
                     readFromCurrentPoll = stream.Read(data, 0, client.ReceiveBufferSize);
-                    if (bytesToRead == 0)
+                    if (bytesToRead == 0) //when 0 the program knows that the next batch is new data
                     {
                         byte[] noPadding = new byte[readFromCurrentPoll];
                         Array.Copy(data, 0, noPadding, 0, readFromCurrentPoll);
                         bufferList.AddRange(noPadding);
 
-                        if (bufferList.Count >= intLenght)
+                        while (true) //if multiple messages are read in a single go they all have to be cleared
                         {
-                            byte[] number = new byte[intLenght];
-                            for (int i = 0; i < intLenght; i++)
+                            if (bufferList.Count >= intLenght)
                             {
-                                number[i] = bufferList[i];
-                            }
+                                byte[] number = new byte[intLenght];
+                                for (int i = 0; i < intLenght; i++)
+                                {
+                                    number[i] = bufferList[i];
+                                }
 
-                            bytesToRead = BitConverter.ToInt32(number, 0);
-                            bufferList.RemoveRange(0, intLenght);
+                                bytesToRead = BitConverter.ToInt32(number, 0);
+                                bufferList.RemoveRange(0, intLenght);
+
+                                if (bufferList.Count >= bytesToRead)
+                                {
+                                    byte[] final = new byte[bytesToRead];
+
+                                    bufferList.CopyTo(0, final, 0, bytesToRead);
+                                    if (OnRawDataRecieved != null)
+                                    {
+                                        OnRawDataRecieved(id, final);
+                                    }
+                                    bufferList.RemoveRange(0, bytesToRead);
+                                    bytesToRead = 0;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
                     else
@@ -167,7 +199,10 @@ namespace AbstractTCPlib
                 }
                 catch (Exception e)
                 {
-                    OnError(ErrorTypes.InRecieveCodeError, e.Message);
+                    if (OnError != null)
+                    {
+                        OnError(id, ErrorTypes.InRecieveCodeError, e.Message);
+                    }
                     isAlive = false;
                     Dispose();
                 }
@@ -188,5 +223,6 @@ namespace AbstractTCPlib
         }
 
         public bool IsAlive { get { return isAlive; } }
+        public int ID { get { return id; } }
     }
 }

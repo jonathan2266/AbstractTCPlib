@@ -31,8 +31,6 @@ namespace AbstractTCPlib.UDPdiscovery
             {
                 try
                 {
-                    server.Send(broadcastMessageMaster, broadcastMessageMaster.Length, end);
-
                     TcpClient client = new TcpClient();
                     client.Connect(end);
                     return client;

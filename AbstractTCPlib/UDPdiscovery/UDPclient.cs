@@ -24,8 +24,6 @@ namespace AbstractTCPlib.UDPdiscovery
             this.port = port;
 
             client = new UdpClient(port);
-            client.Client.ReceiveTimeout = 5000;
-            client.Client.SendTimeout = 5000;
             client.EnableBroadcast = true;
             end = new IPEndPoint(IPAddress.Broadcast, port);
         }

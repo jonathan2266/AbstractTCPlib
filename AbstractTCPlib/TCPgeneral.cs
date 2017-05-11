@@ -27,7 +27,7 @@ namespace AbstractTCPlib
             this.client = client;
             stream = this.client.GetStream();
             id = uniqueID;
-
+            
             sendBuffer = new ConcurrentQueue<byte[]>();
             intLenght = BitConverter.GetBytes(int.MaxValue).Length;
 
@@ -36,8 +36,11 @@ namespace AbstractTCPlib
         }
         public void Start()
         {
-            recieve.Start();
-            send.Start();
+            if (!recieve.IsAlive && !send.IsAlive)
+            {
+                recieve.Start();
+                send.Start();
+            }
         }
         private void sendTCP()
         {
@@ -192,9 +195,7 @@ namespace AbstractTCPlib
                             {
                                 break;
                             }
-
                         }
-
                     }
                 }
                 catch (Exception e)

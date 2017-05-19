@@ -48,7 +48,7 @@ namespace AbstractTCPlib
             byte[] rawData;
             byte[] rawLenght;
 
-            while (true)
+            while (isAlive)
             {
                 bool ok = sendBuffer.TryDequeue(out rawData);
                 if (ok)
@@ -72,12 +72,11 @@ namespace AbstractTCPlib
                     }
                     catch (Exception e)
                     {
+                        isAlive = false;
                         if (OnError != null)
                         {
                             OnError(id, ErrorTypes.TCPWriteException, e.Message);
                         }
-                        isAlive = false;
-                        Dispose();
                     }
                 }
                 else
@@ -99,16 +98,17 @@ namespace AbstractTCPlib
             }
             catch (Exception e)
             {
+                isAlive = false;
                 if (OnError != null)
                 {
                     OnError(id, ErrorTypes.ClientReceiveBufferSize, e.Message);
                 }
-                isAlive = false;
-                Dispose();
+                
+                
             }
             List<byte> bufferList = new List<byte>();
 
-            while (true)
+            while (isAlive)
             {
                 //gets the bytestoRead
                 try
@@ -200,12 +200,11 @@ namespace AbstractTCPlib
                 }
                 catch (Exception e)
                 {
+                    isAlive = false;
                     if (OnError != null)
                     {
                         OnError(id, ErrorTypes.InRecieveCodeError, e.Message);
                     }
-                    isAlive = false;
-                    Dispose();
                 }
             }
         }
@@ -217,8 +216,9 @@ namespace AbstractTCPlib
 
         public void Dispose()
         {
-            recieve.Abort();
-            send.Abort();
+            OnError = null;
+            isAlive = false;
+            client.Client.Disconnect(true);
             stream.Close();
             client.Close();
         }

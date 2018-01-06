@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace AbstractTCPlib.UDPdiscovery
 {
-    public class UDPclient
+    public class UDPclient : IDisposable
     {
         private byte[] broadcastMessageClient;
         private byte[] broadcastMessageMaster;
@@ -32,6 +30,7 @@ namespace AbstractTCPlib.UDPdiscovery
             client.Send(broadcastMessageClient, broadcastMessageClient.Length, end);
 
             TcpListener lis = new TcpListener(IPAddress.Any, port);
+            lis.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             lis.Start();
 
             TimeSpan span = new TimeSpan(0, 0, 5);
@@ -57,8 +56,17 @@ namespace AbstractTCPlib.UDPdiscovery
 
             end = new IPEndPoint(IPAddress.Broadcast, port);
 
+            lis.Stop();
+
             return resultedClient;
         }
 
+        public void Dispose()
+        {
+            if (client != null)
+            {
+                client.Close();
+            }
+        }
     }
 }

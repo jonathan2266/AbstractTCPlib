@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AbstractTCPlib
 {
@@ -11,10 +12,12 @@ namespace AbstractTCPlib
         private TcpClient client;
         private NetworkStream stream;
         private ConcurrentQueue<byte[]> sendBuffer;
-        private Thread recieve;
-        private Thread send;
+        private Task recieve;
+        private Task send;
         private int intLenght;
         private int id;
+
+        private AutoResetEvent sendTcpSleeper = new AutoResetEvent(false);
 
         private bool isAlive;
 
@@ -31,18 +34,18 @@ namespace AbstractTCPlib
             sendBuffer = new ConcurrentQueue<byte[]>();
             intLenght = BitConverter.GetBytes(int.MaxValue).Length;
 
-            recieve = new Thread(new ThreadStart(recieveTCP));
-            send = new Thread(new ThreadStart(sendTCP));
+            recieve = new Task(RecieveTCP);
+            send = new Task(SendTCP);
         }
         public void Start()
         {
-            if (!recieve.IsAlive && !send.IsAlive)
+            if (!(recieve.Status == TaskStatus.Running) && !(send.Status == TaskStatus.Running))
             {
                 recieve.Start();
                 send.Start();
             }
         }
-        private void sendTCP()
+        private void SendTCP()
         {
             byte[] toSend;
             byte[] rawData;
@@ -79,14 +82,14 @@ namespace AbstractTCPlib
                         }
                     }
                 }
-                else
+                else if (sendBuffer.Count == 0)
                 {
-                    Thread.Sleep(1);
+                    sendTcpSleeper.WaitOne(50);
                 }
             }
         }
 
-        private void recieveTCP()
+        private void RecieveTCP()
         {
             byte[] data = null;
             int bytesToRead = 0;
@@ -212,6 +215,7 @@ namespace AbstractTCPlib
         public void SendTCP(byte[] data)
         {
             sendBuffer.Enqueue(data);
+            sendTcpSleeper.Set();
         }
 
         public void Dispose()
@@ -219,7 +223,6 @@ namespace AbstractTCPlib
             OnError = null;
             isAlive = false;
             client.Client.Disconnect(true);
-            stream.Close();
             client.Close();
         }
 

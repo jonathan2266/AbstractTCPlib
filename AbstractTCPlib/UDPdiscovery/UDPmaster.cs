@@ -6,7 +6,7 @@ using System.Text;
 
 namespace AbstractTCPlib.UDPdiscovery
 {
-    public class UDPmaster
+    public class UDPmaster : IDisposable
     {
         private byte[] broadcastMessageMaster;
         private byte[] broadcastMessageClient;
@@ -23,6 +23,7 @@ namespace AbstractTCPlib.UDPdiscovery
             server = new UdpClient(port);
             end = new IPEndPoint(IPAddress.Any, port);
         }
+
         public TcpClient Listen()
         {
             byte[] rec;
@@ -42,6 +43,14 @@ namespace AbstractTCPlib.UDPdiscovery
                 }
             }
             return null;
+        }
+
+        public void Dispose()
+        {
+            if (server != null)
+            {
+                server.Close();
+            }
         }
     }
 }

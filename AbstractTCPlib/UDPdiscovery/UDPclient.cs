@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,28 +9,29 @@ namespace AbstractTCPlib.UDPdiscovery
 {
     public class UDPclient : IDisposable
     {
-        private byte[] broadcastMessageClient;
-        private byte[] broadcastMessageMaster;
-        private int port;
+        private string broadcastMessageClient;
+        private int destinationBroadCastPort;
         private UdpClient client = null;
         private IPEndPoint end;
-        private TcpClient resultedClient;
+        private List<TcpClient> resultedClients = new List<TcpClient>();
 
-        public UDPclient(string broadcastMessage, int port)
+        public UDPclient(string broadcastMessage, int destinationBroadCastPort)
         {
-            broadcastMessageClient = Encoding.ASCII.GetBytes(broadcastMessage + "client");
-            broadcastMessageMaster = Encoding.ASCII.GetBytes(broadcastMessage + "master");
-            this.port = port;
+            broadcastMessageClient = broadcastMessage + "client";
+            this.destinationBroadCastPort = destinationBroadCastPort;
 
-            client = new UdpClient(port);
+            client = new UdpClient();
             client.EnableBroadcast = true;
-            end = new IPEndPoint(IPAddress.Broadcast, port);
         }
-        public TcpClient Broadcast()
+        public TcpClient[] Broadcast(int tcpListenPort)
         {
-            client.Send(broadcastMessageClient, broadcastMessageClient.Length, end);
+            end = new IPEndPoint(IPAddress.Broadcast, destinationBroadCastPort);
 
-            TcpListener lis = new TcpListener(IPAddress.Any, port);
+            byte[] encodedMessage = Encoding.ASCII.GetBytes(broadcastMessageClient + tcpListenPort);
+
+            client.Send(encodedMessage, encodedMessage.Length, end);
+            
+            TcpListener lis = new TcpListener(IPAddress.Any, tcpListenPort);
             lis.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             lis.Start();
 
@@ -48,17 +50,14 @@ namespace AbstractTCPlib.UDPdiscovery
                 }
             }
 
-            if (lis.Pending())
+            while (lis.Pending())
             {
-                resultedClient = lis.AcceptTcpClient();
+                resultedClients.Add(lis.AcceptTcpClient());
             }
-
-
-            end = new IPEndPoint(IPAddress.Broadcast, port);
 
             lis.Stop();
 
-            return resultedClient;
+            return resultedClients.ToArray();
         }
 
         public void Dispose()

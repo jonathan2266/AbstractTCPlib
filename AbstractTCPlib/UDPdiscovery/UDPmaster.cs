@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -8,30 +7,31 @@ namespace AbstractTCPlib.UDPdiscovery
 {
     public class UDPmaster : IDisposable
     {
-        private byte[] broadcastMessageMaster;
-        private byte[] broadcastMessageClient;
+        private string broadcastMessageClient;
         private UdpClient server;
         private IPEndPoint end;
-        private int port;
+        private int localUDPClientPort;
 
-        public UDPmaster(string broadcastMessage, int port)
+        public UDPmaster(string broadcastMessage, int localUDPClientPort)
         {
-            broadcastMessageMaster = Encoding.ASCII.GetBytes(broadcastMessage + "master");
-            broadcastMessageClient = Encoding.ASCII.GetBytes(broadcastMessage + "client");
-            this.port = port;
+            broadcastMessageClient = broadcastMessage + "client";
+            this.localUDPClientPort = localUDPClientPort;
 
-            server = new UdpClient(port);
-            end = new IPEndPoint(IPAddress.Any, port);
+            server = new UdpClient(this.localUDPClientPort);
+            end = new IPEndPoint(IPAddress.Any, 0);
         }
 
         public TcpClient Listen()
         {
-            byte[] rec;
-            rec = server.Receive(ref end);
-            if (broadcastMessageClient.SequenceEqual(rec))
+            string recievedMessage = Encoding.ASCII.GetString(server.Receive(ref end));
+
+            if (string.Equals(broadcastMessageClient, recievedMessage.Substring(0, broadcastMessageClient.Length)) && 
+                int.TryParse(recievedMessage.Substring(broadcastMessageClient.Length), out int port))
             {
                 try
                 {
+                    end.Port = port;
+
                     TcpClient client = new TcpClient();
                     client.Connect(end);
                     return client;
@@ -39,9 +39,9 @@ namespace AbstractTCPlib.UDPdiscovery
                 catch (Exception e)
                 {
                     Console.WriteLine("UDPMaster: " + e);
-                    return null;
                 }
             }
+            
             return null;
         }
 

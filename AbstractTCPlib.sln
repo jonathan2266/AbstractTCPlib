@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractTCPlib", "AbstractTCPlib\AbstractTCPlib.csproj", "{BCD3B477-3E1D-4CE7-B9DA-8B1B73A8EB31}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractTCPlibTests", "AbstractTcplibTests\AbstractTCPlibTests.csproj", "{4516ED4B-9A5B-4D5C-BEE0-9794FBCB64C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{BCD3B477-3E1D-4CE7-B9DA-8B1B73A8EB31}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCD3B477-3E1D-4CE7-B9DA-8B1B73A8EB31}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCD3B477-3E1D-4CE7-B9DA-8B1B73A8EB31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4516ED4B-9A5B-4D5C-BEE0-9794FBCB64C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4516ED4B-9A5B-4D5C-BEE0-9794FBCB64C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4516ED4B-9A5B-4D5C-BEE0-9794FBCB64C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4516ED4B-9A5B-4D5C-BEE0-9794FBCB64C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D2BA79E9-8960-4A0F-8B2C-A8556D2A6080}
 	EndGlobalSection
 EndGlobal
